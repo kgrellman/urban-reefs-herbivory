@@ -7,9 +7,7 @@ editor_options:
   chunk_output_type: inline
 ---
 
-```{r}
-##This is zack testing Git hub
-```
+
 
 #################### Setup ####################
 
