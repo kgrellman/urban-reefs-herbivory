@@ -7,8 +7,6 @@ editor_options:
   chunk_output_type: inline
 ---
 
-
-
 #################### Setup ####################
 
 ```{r setup, include=FALSE}
@@ -17,6 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r, Load libraries, message=F, warning=F, echo=F}
 library(corrplot)
+library(gplots)
 library(ggplot2)
 library(cowplot) 
 theme_set(theme_cowplot()) 
@@ -56,14 +55,16 @@ library(segmented)
 ```
 
 ```{r, Load data, message=F, warning=F, echo=F}
-follows.dat <- read.csv("/Users/Kat/Documents/2_Research/Fish Follows Manuscript/GitHub/Fish_follows.csv")
+follows.dat <- read.csv("/Users/Kat/Documents/2_Research/Fish Follows Manuscript/GitHub/urban-reefs-herbivory/Fish_follows.csv")
 
-rawben.dat <- read.csv("/Users/Kat/Documents/2_Research/Fish Follows Manuscript/GitHub//Supp_Benthic_Data.csv")
+rawben.dat <- read.csv("/Users/Kat/Documents/2_Research/Fish Follows Manuscript/GitHub/urban-reefs-herbivory/Supp_Benthic_Data.csv")
 ```
 
 ```{r, Load graphics, message=F, warning=F, echo=F}
 
 # Fish silouettes
+# Source: Fishualize R Package (https://github.com/nschiett/fishualize).
+
 zv.img <- readPNG("/Users/Kat/Documents/2_Research/Thesis Resources/10_Thesis/Data Analysis/Fishualize Silouettes/Acanthuridae_Zebrasoma.velifer.png")
 nl.img <- readPNG("/Users/Kat/Documents/2_Research/Thesis Resources/10_Thesis/Data Analysis/Fishualize Silouettes/Acanthuridae_Naso.lituratus.png")
 nu.img <- readPNG("/Users/Kat/Documents/2_Research/Thesis Resources/10_Thesis/Data Analysis/Fishualize Silouettes/Acanthuridae_Naso.unicornis.png")
@@ -73,22 +74,11 @@ at.img <- readPNG("/Users/Kat/Documents/2_Research/Thesis Resources/10_Thesis/Da
 cs.img <- readPNG("/Users/Kat/Documents/2_Research/Thesis Resources/10_Thesis/Data Analysis/Fishualize Silouettes/Labridae_Chlorurus.sordidus.cs.png")
 sp.img <- readPNG("/Users/Kat/Documents/2_Research/Thesis Resources/10_Thesis/Data Analysis/Fishualize Silouettes/Labridae_Scarus.oviceps.sp.png")
 
-# Benthic cateegories
-turf.img <- readPNG("/Users/Kat/Documents/2_Research/Thesis Resources/10_Thesis/Data Analysis/Graphics/epilithic-algae.png")
-cca.img <- readPNG("/Users/Kat/Documents/2_Research/Thesis Resources/10_Thesis/Data Analysis/Graphics/coralline-algae.png")
-macro.img <- readPNG("/Users/Kat/Documents/2_Research/Thesis Resources/10_Thesis/Data Analysis/Graphics/lobaria-pulmonaria.png")
-rock.img <- readPNG("/Users/Kat/Documents/2_Research/Thesis Resources/10_Thesis/Data Analysis/Graphics/rocks-2.png")
-rubble.img <- readPNG("/Users/Kat/Documents/2_Research/Thesis Resources/10_Thesis/Data Analysis/Graphics/rocks-1.png")
-coral.img <- readPNG("/Users/Kat/Documents/2_Research/Thesis Resources/10_Thesis/Data Analysis/Graphics/pocillopora-meandrina-cauliflower-coral.png")
-sponge.img <- readPNG("/Users/Kat/Documents/2_Research/Thesis Resources/10_Thesis/Data Analysis/Graphics/neoesperiopsis-rigida-orange-finger-sponge.png")
-  
-# Sources: Integration and Application Network, University of Maryland (https://github.com/nschiett/fishualize) and Fishualize R Package (https://github.com/nschiett/fishualize). 
-
 ```
 
-#################### Data Exploration ####################
+#################### Data Exploration & Plots ####################
 
-```{r, PLOTS - Histogram, distribution of bites per minute}
+```{r, DATA EXPLORATION - Histogram, distribution of bites per minute}
 # Histogram - all substrates
 ggplot(data=follows.dat) +
   geom_histogram(aes(x=total)) +
@@ -96,14 +86,14 @@ ggplot(data=follows.dat) +
 
 ```
 
-```{r, PLOTS -  Visibility vs. turbidity}
-
-y <- vis.dat$visibility.m
-x <- vis.dat$turbidity.ntu
+```{r, PLOTS -  Visibility vs. Turbidity}
 
 vis.dat <- follows.dat[!is.na(as.numeric(follows.dat$visibility.m)), ]
 vis.dat <- vis.dat %>%
   mutate(visibility.m = as.numeric(visibility.m))
+
+y <- vis.dat$visibility.m
+x <- vis.dat$turbidity.ntu
 
 visex.plot <- ggplot(vis.dat,mapping=aes(x=turbidity.ntu,y=as.numeric(visibility.m), na.rm=TRUE)) +
   geom_point() +
@@ -181,11 +171,11 @@ abline(h = 0, col = "red")
 plotmeans(turbidity.ntu ~ site.id, data = follows.dat,
           xlab = "Site ID", ylab = "Mean Turbidity (NTU)")
 abline(h = c(1.5, 2), lty = 2)
-text(x = par("usr")[1] - 0.1, y = c(1.3, 1.75, 2.6), labels = c("Low (Control)", "Medium", "High"), pos = 4, col="red")
+text(x = par("usr")[1] - 0.1, y = c(1.3, 1.75, 2.6), labels = c("Low", "Medium", "High"), pos = 4, col="red")
 
 ```
 
-```{r, PLOTS - Spatial NTU trends}
+```{r, DATA EXPLORATION & PLOTS - Spatial NTU trends and SE}
 
 # Define the desired order of levels
 custom_order <- c("C", "B", "A")
@@ -206,7 +196,7 @@ turb.spatial <- ggplot(follows.dat,aes(x=as.factor(site.grp),y=turbidity.ntu)) +
     axis.text.x = element_text(size=20),   # X axis labels size
     axis.text.y = element_text(size=20))  # Y axis labels size
 print(turb.spatial)
-ggsave("turb.spatial.jpg", turb.spatial)
+#ggsave("turb.spatial.jpg", turb.spatial)
 
 # Mean and median turbidity values at each site
 tapply(follows.dat$turbidity.ntu,follows.dat$site.grp, mean)
@@ -225,14 +215,11 @@ sd.f <- sd(siteA.dat$turbidity.ntu)
 n.f <- length(siteA.dat$turbidity.ntu)
 se.f <- sd.f/sqrt(n.f)
 print(se.f)
+```
 
+```{r, DATA EXPLORATION - SE Benthic Composition}
 
 # SE Benthic Comp
-View(rawben.dat)
-tapply(rawben.dat$Branching.Coral, rawben.dat$SiteGrp, se)
-benA.dat <- follows.dat %>%
-  filter(SiteGrp == "A")
-
 std_error <- function(x) {
   sd(x) / sqrt(length(x))
 }
@@ -285,6 +272,7 @@ print(se_resultsC)
 ```
 
 ```{r, SAMPLE SIZES OF TURBIDITY MEASUREMENTS}
+
 a.dat <- follows.dat %>%
   filter(site.grp=="A")
 length(unique(a.dat$turbidity.ntu))
@@ -295,7 +283,6 @@ c.dat <- follows.dat %>%
   filter(site.grp=="C")
 length(unique(c.dat$turbidity.ntu))
 
-length(unique(follows.dat$turbidity.ntu))
 ```
 
 ```{r, PLOTS - Stacked barchart of benthic comp across locations/sites}
@@ -335,12 +322,12 @@ benthic.plot <- ggplot(benthic.long, aes(x=as.factor(site.grp), y=percent_cover,
     axis.text.x = element_text(size=20),   # X axis labels size
     axis.text.y = element_text(size=20))
 print(benthic.plot)
-ggsave("benthic.plot.jpg",benthic.plot, width=8, height=6, dpi=300)
+#ggsave("benthic.plot.jpg",benthic.plot, width=8, height=6, dpi=300)
 
 # Combine with spatial turbidity figure
 sites.plot <- ggarrange(turb.spatial, common.legend=TRUE, legend="right", benthic.plot, ncol=1, nrow=2)
 print(sites.plot)
-ggsave("sites.plot.jpg", sites.plot, height=11, width=8, dpi=300)
+#ggsave("sites.plot.jpg", sites.plot, height=11, width=8, dpi=300)
 
 ```
 
@@ -402,7 +389,7 @@ write.csv(tukey_results, "benthic_tukey_results.csv", row.names = FALSE)
 
 ```
 
-```{r, PLOTS - Size of fish across locations/sites}
+```{r, DATA EXPLORATION & PLOTS - Size of fish across locations/sites}
 
 spatialsize.plot <- ggplot(follows.dat, aes(x=site.grp, y=tl, fill=as.factor(site.grp))) +
   geom_boxplot(alpha=0.7) +
@@ -429,7 +416,7 @@ tapply(follows.dat$tl,follows.dat$site.grp, range)
 
 ```
 
-```{r, PLOTS - Bite rates across fish size and temperature}
+```{r, DATA EXPLORATION & PLOTS - Bite rates across fish size and temperature}
 # Total length vs. bite rate
 size.plot <- ggplot(follows.dat,aes(y=total,x=tl,color=as.factor(species))) +
   geom_smooth(method="lm") +
@@ -597,16 +584,6 @@ fbitegradient.plot <- annotate_figure(bitegradient.plot,
 #print(fbitegradient.plot)
 
 #ggsave("fbitegradient.plot.jpg", fbitegradient.plot, height=10, width=6.5, dpi=300)
-
-scraper.plot <-ggarrange(sp.plot, cs.plot, ncol = 2, nrow = 1, align="hv")
-scraper.plot <- annotate_figure(scraper.plot,
-                bottom = text_grob("Turbidity (NTU)", color = "black", size = 18),
-                left = text_grob("Bites per Minute", color = "black", rot = 90, size=18))
-print(scraper.plot)
-ggsave("scraper.plot.jpg", scraper.plot)
-
-
-
 
 ```
 
@@ -830,11 +807,6 @@ tapply(sp.age$turbidity.ntu, sp.age$tl.grp, range)
 ```
 
 ```{r, EXPLORATIVE PLOTS - Water quality params and biological variables vs. bite counts}
-# Size = may have effect on total bites - INCLUDE (FIXED)
-# Temp = may have effect on total bites - INCLUDE (FIXED)
-# DO = not a major effect and slightly correlates with turbidity - DON'T INCLUDE
-# Site & location = Random effects on total bites - INCLUDE (RANDOM)
-
 
 ## Size ##
 ggplot(follows.dat,aes(y=total,color=as.factor(species))) +
@@ -866,15 +838,10 @@ ggplot(follows.dat,aes(y=total,color=as.factor(species))) +
 # Correlation plot between predictor variables and response variable ('total' -total bites per minute)
 pred.cor = cor(follows.dat[,c(23,11,16,21,43)], use="pairwise.complete")
 corrplot.mixed(pred.cor) 
+
 ```
 
 ```{r, EXPLORATIVE PLOTS - Benthic composition and bite counts}
-#Turf = Main food choice - INCLUDE
-#Branching = heavy negative correlation with macro and turf - DON'T INCLUDE
-#Macro = correlated with turf - DON'T INCLUDE 
-#CCA = heavy negative correlation with rubble and sand - DON'T INCLUDE
-#Rubble = heavy negative correlation with CCA - INCLUDE
-#Sand = negative correlation with turf and CCA - DON'T INCLUDE
 
 ## Turf ##
 ggplot(follows.dat,aes(y=total,color=as.factor(species))) +
@@ -900,11 +867,20 @@ ggplot(follows.dat,aes(y=total,color=as.factor(species))) +
 ben.cor = cor(follows.dat[,c(43,55:63)], use="pairwise.complete")
 corrplot.mixed(ben.cor)
 
+### SUMMARY OF CORRELATION PLOT ###
+#Turf = Main food choice
+#Branching = heavy negative correlation with macro and turf 
+#Macro = correlated with turf  
+#CCA = heavy negative correlation with rubble and sand
+#Rubble = heavy negative correlation with CCA
+#Sand = negative correlation with turf and CCA
+
 ```
 
-#################### Statistics - SuS Gradient ####################
+#################### Statistics - Foraging Across Turbidity Gradients ####################
 
 ```{r, DATA WRANGLING FOR TURBIDITY MODELS}
+
 ### SET UP DATA TABLE FOR MODELING ###
 # Convert to factors
 follows.dat$location=as.factor(follows.dat$location)
@@ -922,154 +898,7 @@ unis <- filter(follows.dat,functional=="Browser") #create df
 
 ```
 
-```{r, TURBIDITY MODEL - C. spilurus}
-ggplot(data=cs) +
-  geom_histogram(aes(x=total), bins=20) #Negative binomial distribution
-
-# Identify theta value                                                                                                             
-cs1 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=cs, family=neg.bin(theta=1))
-cs2 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=cs, family=neg.bin(theta=2))
-cs3 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=cs, family=neg.bin(theta=3))
-cs4 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=cs, family=neg.bin(theta=4))
-
-model.sel(list(cs1, cs2, cs3, cs4), rank=AICc)
-
-cs2.1 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=cs, family=neg.bin(theta=2.1))
-cs2.2 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=cs, family=neg.bin(theta=2.2))
-cs2.3 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=cs, family=neg.bin(theta=2.3))
-cs2.4 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=cs, family=neg.bin(theta=2.4))
-cs2.5 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=cs, family=neg.bin(theta=2.5))
-cs2.6 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=cs, family=neg.bin(theta=2.6))
-cs2.7 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=cs, family=neg.bin(theta=2.7))
-cs2.8 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=cs, family=neg.bin(theta=2.8))
-cs2.9 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=cs, family=neg.bin(theta=2.9))
-
-model.sel(list(cs2, cs2.1, cs2.2, cs2.3, cs2.4, cs2.5, cs2.6, cs2.7, cs2.8, cs2.9), rank=AICc)
-# theta = 2.1
-
-# Check model params and select predictors based on AICc
-cs.gl <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=cs, na.action=na.fail, family=neg.bin(theta=2.1))
-summary(cs.gl)
-plot(cs.gl)
-qqnorm(resid(cs.gl))
-qqline(resid(cs.gl))
-acf(resid(cs.gl))
-check_collinearity(cs.gl)
-print(dredge(cs.gl))
-
-
-cs.glm <- glmer(total ~ turbidity.ntu + tl + bc.rubble + (1|month) + (1|location/site), data=cs, family=neg.bin(theta=2.1))
-summary(cs.glm)
-plot(cs.glm)
-qqnorm(resid(cs.glm))
-qqline(resid(cs.glm))
-acf(resid(cs.glm))
-check_collinearity(cs.glm)
-r2_nakagawa(cs.glm)
-lme4::isSingular(cs.glm)
-
-# Extract the coefficients
-cs.co <- summary(cs.glm)$coefficients
-
-# Calculate the effect size for TL
-cs.tl <- exp(cs.co["tl", "Estimate"])  # Exponentiate the coefficient
-
-# Convert to percentage change
-(cs.tl - 1) * 100
-
-# Calculate the confidence intervals
-cs.ci <- confint(cs.glm, level=0.95)
-cs.ci.tl <- exp(cs.ci["tl", ])  # Exponentiate the confidence intervals
-(cs.ci.tl - 1) * 100
-
-# Calculate the effect size for bc.rubble
-cs.rub <- exp(cs.co["bc.rubble", "Estimate"])  # Exponentiate the coefficient
-
-# Convert to percentage change
-(cs.rub - 1) * 100
-
-# Calculate the confidence intervals
-cs.ci <- confint(cs.glm, level=0.95)
-cs.ci.rub <- exp(cs.ci["bc.rubble", ])  # Exponentiate the confidence intervals
-(cs.ci.rub - 1) * 100
-
-
-```
-
-```{r, QUANTILE REGRESSION PRACTICE 1 - separate species - DON'T USE}
-
-# C. spilurus
-cp9.rq <- rq(total ~ turbidity.ntu + tl + temp.c + bc.turf, tau=0.9,data=cs)
-summary(cp9.rq) 
-residuals_sp_rq <- residuals(cp9.rq)
-hist(residuals_sp_rq, main = "Histogram of Residuals", xlab = "Residuals")
-# Check collinearity
-cp.lm <- lm(total ~ turbidity.ntu + tl + temp.c + bc.turf, data=cs)
-vif(cp.lm)
-
-# S. psittacus
-sp9.rq <- rq(total ~ turbidity.ntu + tl + temp.c + bc.turf, tau=0.9, data=sp)
-summary(sp9.rq)
-sp7.rq <- rq(total ~ turbidity.ntu + tl + temp.c + bc.turf, tau=0.7,data=sp)
-summary(sp7.rq)
-# Check collinearity
-sp.lm <- lm(total ~ turbidity.ntu + tl + temp.c + bc.turf, data=sp)
-vif(sp.lm)
-
-# A. triostegus (manini)
-man95.rq <- rq(total ~ turbidity.ntu + temp.c + bc.turf, tau=0.95, data=manini)
-summary(man95.rq)
-summ(man95.rq)
-man9.rq <- rq(total ~ turbidity.ntu + temp.c + bc.turf, tau=0.9, data=manini)
-summ(man9.rq)
-man75.rq <- rq(total ~ turbidity.ntu + temp.c + bc.turf, tau=0.75, data=manini)
-summ(man75.rq)
-man5.rq <- rq(total ~ turbidity.ntu + temp.c + bc.turf, tau=0.5, data=manini)
-summary(man5.rq)
-man1.rq <- rq(total ~ turbidity.ntu + temp.c + bc.turf, tau=0.1, data=manini)
-summary(man1.rq)
-residuals_man_rq <- residuals(man1.rq)
-hist(residuals_man_rq, main = "Histogram of Residuals", xlab = "Residuals")
-# Check collinearity
-man.lm <- lm(total ~ turbidity.ntu + tl + temp.c + bc.turf, data=manini)
-vif(man.lm)
-
-# A. blochii
-ab9.rq <- rq(total ~ turbidity.ntu + tl + temp.c + bc.turf, tau=0.9, data=ab)
-summary(ab9.rq)
-
-# Z. flavescens
-zf9.rq <- rq(total ~ turbidity.ntu + tl + temp.c + bc.turf, tau=0.9, data=zf)
-summary(zf9.rq)
-
-# Z. velifer
-zv9.rq <- rq(total ~ turbidity.ntu, tau=0.9, data=zv)
-summary(zv9.rq)
-zv75.rq <- rq(total ~ turbidity.ntu, tau=0.75, data=zv)
-summary(zv75.rq)
-# Check collinearity
-zv.lm <- lm(total ~ turbidity.ntu + tl + temp.c + bc.turf, data=zv)
-vif(zv.lm)
-
-
-# DON'T USE - MODEL 1 FIT - need to figure out for loop with summ() output 
-# Loop through each species and fit quantile regression
-quantiles <- c(0.10, 0.50, 0.75, 0.90, 0.95)  # Choose quantiles of interest
-
-for (manini in unique(follows.dat$species)) {
-  species.data <- subset(follows.dat, species == manini)
-  
-  for (q in quantiles) {
-    model <- rq(total ~ turbidity.ntu + tl + temp.c + bc.turf, 
-                tau = q, data = species.data)
-    cat("\nSpecies:", manini, "- Quantile:", q, "\n")
-    print(summary(model))
-  }
-}
-
-```
-
-```{r, QUANTILE REGRESSION}
+```{r, QUANTILE REGRESSION, MODELS & PLOTS - all species}
 
 # STEPWISE MODEL SELECTION
 # Check model fit 
@@ -1382,458 +1211,9 @@ all_quantiles <- all_quantiles[, c("tau", "predictor", "Value", "Std. Error", "t
 write.csv(all_quantiles, "quantile_regression_summary.csv", row.names = FALSE)
 ```
 
+```{r, LEAST SQUARES MEANS - Comparing bite rate slopes}
 
-```{r, QUANTILE REGRESSION PRACTICE 3 - DON"T USE}
-
-# MODEL 1 FIT - need to figure out for loop with summ() output 
-# Loop through each species and fit quantile regression
-quantiles <- c(0.10, 0.50, 0.75, 0.90, 0.95)  # Choose quantiles of interest
-
-for (sp in unique(follows.dat$species)) {
-  species.data <- subset(follows.dat, species == sp)
-  
-  for (q in quantiles) {
-    model <- rq(total ~ turbidity.ntu + temp.c + bc.turf, 
-                tau = q, data = species.data)
-    cat("\nSpecies:", sp, "- Quantile:", q, "\n")
-    print(summary(model))
-  }
-}
-
-# Graph coefficients - Manini
-quantiles <- seq(0.05, 0.95, by = 0.05)  # From 5th to 95th percentile
-models <- lapply(quantiles, function(q) {
-  rq(total ~ turbidity.ntu + temp.c + tl, tau = q, data = manini)
-})
-
-# Extract coefficients for turbidity across quantiles
-coef_turb <- sapply(models, function(m) coef(m)["turbidity.ntu"])
-coef_df <- data.frame(Quantile = quantiles, Turbidity_Effect = coef_turb)
-
-# Plot the turbidity effect across quantiles
-ggplot(coef_df, aes(x = Quantile, y = Turbidity_Effect)) +
-  geom_line(color = "blue", size = 1) +
-  geom_point(color = "red") +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  labs(title = "Effect of Turbidity on Foraging Rate Across Quantiles",
-       x = "Quantile", y = "Turbidity Coefficient (Effect on Foraging Rate)")
-
-```
-
-```{r, TURBIDITY MODEL - S. psittacus}
-ggplot(data=sp) +
-  geom_histogram(aes(x=total), bins=20) # Negative binomial distribution
-
-
-# Identify theta value                                                                                                             
-sp1 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=sp, family=neg.bin(theta=1))
-sp2 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=sp, family=neg.bin(theta=2))
-sp3 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=sp, family=neg.bin(theta=3))
-sp4 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=sp, family=neg.bin(theta=4))
-
-model.sel(list(sp1, sp2, sp3, sp4), rank=AICc)
-sp3.5 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=sp, family=neg.bin(theta=3.5))
-model.sel(list(sp3, sp4, sp3.5), rank=AICc)
-
-sp3 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=sp, family=neg.bin(theta=3))
-sp3.1 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=sp, family=neg.bin(theta=3.1))
-sp3.2 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=sp, family=neg.bin(theta=3.2))
-sp3.3 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=sp, family=neg.bin(theta=3.3))
-sp3.4 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=sp, family=neg.bin(theta=3.4))
-sp3.5 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=sp, family=neg.bin(theta=3.5))
-model.sel(list(sp3, sp3.1, sp3.2, sp3.3, sp3.4, sp3.5), rank=AICc)
-# theta = 3
-
-# Check model params and select predictors based on AICc
-sp.gl <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=sp, na.action=na.fail, family=neg.bin(theta=3))
-summary(sp.gl)
-plot(sp.gl)
-qqnorm(resid(sp.gl))
-qqline(resid(sp.gl))
-acf(resid(sp.gl))
-check_collinearity(sp.gl)
-print(dredge(sp.gl))
-lme4::isSingular(sp.gl)
-
-# AICc = 0, fit is singular
-sp.glm1 <- glmer(total ~ turbidity.ntu + temp.c + bc.turf + (1|month) + (1|location/site), data=sp, family=neg.bin(theta=3))
-
-# Check number of fish at each location/site
-nrow(follows.dat[follows.dat$location == "L1 - South Bay" & follows.dat$site == "1" & follows.dat$species == "S. psittacus", ])
-nrow(follows.dat[follows.dat$location == "L1 - South Bay" & follows.dat$site == "2" & follows.dat$species == "S. psittacus", ])
-nrow(follows.dat[follows.dat$location == "L1 - South Bay" & follows.dat$site == "3" & follows.dat$species == "S. psittacus", ])
-nrow(follows.dat[follows.dat$location == "L2 - Mid Bay" & follows.dat$site == "1" & follows.dat$species == "S. psittacus", ])
-nrow(follows.dat[follows.dat$location == "L2 - Mid Bay" & follows.dat$site == "2" & follows.dat$species == "S. psittacus", ])
-nrow(follows.dat[follows.dat$location == "L2 - Mid Bay" & follows.dat$site == "3" & follows.dat$species == "S. psittacus", ])
-nrow(follows.dat[follows.dat$location == "L3 - North Bay" & follows.dat$site == "1" & follows.dat$species == "S. psittacus", ])
-nrow(follows.dat[follows.dat$location == "L3 - North Bay" & follows.dat$site == "2" & follows.dat$species == "S. psittacus", ])
-nrow(follows.dat[follows.dat$location == "L3 - North Bay" & follows.dat$site == "3" & follows.dat$species == "S. psittacus", ])
-
-# AICc = 1.53
-sp.glm <- glmer(total ~ turbidity.ntu + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=sp, family=neg.bin(theta=3))
-lme4::isSingular(sp.glm)
-summary(sp.glm)
-plot(sp.glm)
-qqnorm(resid(sp.glm))
-qqline(resid(sp.glm))
-acf(resid(sp.glm))
-check_collinearity(sp.glm)
-r2_nakagawa(sp.glm)
-
-# Extract the coefficients
-sp.co <- summary(sp.glm)$coefficients
-
-# Calculate the effect size for temperature (temp.c)
-sp.temp <- exp(sp.co["temp.c", "Estimate"])  # Exponentiate the coefficient
-
-# Convert to percentage change
-(sp.temp - 1) * 100
-
-# Calculate the confidence intervals
-sp.ci <- confint(sp.glm, level=0.95)
-sp.ci.temp <- exp(sp.ci["temp.c", ])  # Exponentiate the confidence intervals
-(sp.ci.temp - 1) * 100
-
-# Calculate the effect size for bc.turf
-sp.tuf <- exp(sp.co["bc.turf", "Estimate"])  # Exponentiate the coefficient
-
-# Convert to percentage change
-(sp.tuf - 1) * 100
-
-# Calculate the confidence intervals
-sp.ci <- confint(cs.glm, level=0.95)
-sp.ci.tl <- exp(sp.ci["bc.turf", ])  # Exponentiate the confidence intervals
-(sp.ci.tl - 1) * 100
-
-confint(cs.glm, level=0.95)
-
-```
-
-```{r, TURBIDITY MODEL - A. triostegus}
-ggplot(data=manini) +
-  geom_histogram(aes(x=total))
-ggplot(data=manini) +
-  geom_histogram(aes(x=sqrt(total)))
-
-# Check model params and select predictors
-m.lm <- lmer(sqrt(total) ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|site.id), data=manini, na.action=na.fail, REML=FALSE)
-summary(m.lm)
-plot(m.lm)
-qqnorm(resid(m.lm))
-qqline(resid(m.lm))
-acf(resid(m.lm))
-check_collinearity(m.lm)
-print(dredge(m.lm))
-
-m.lm2 <- lmer(sqrt(total) ~ turbidity.ntu + temp.c + bc.rubble + (1|month) + (1|site.id), data=manini, REML=TRUE)
-summary(m.lm2)
-plot(m.lm2) 
-qqnorm(resid(m.lm2))
-qqline(resid(m.lm2))
-acf(resid(m.lm2))
-r2_nakagawa(m.lm2)
-plot_model(m.lm2, type="pred")
-
-# Extract values
-m.est <- summary(m.lm2)$coefficients["temp.c", "Estimate"]
-
-# Calculate the percent change
-(exp(m.est^2) - 1) * 100
-
-# Extract confidence intervals
-conf_intervals <- confint(m.lm2, level = 0.95)
-
-
-```
-
-```{r, TURBIDITY MODEL - A. blochii}
-ggplot(data=ab) +
-  geom_histogram(aes(x=total)) # Negative binomial
-
-
-# Identify theta value
-ab1 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=ab, family=neg.bin(theta=1))
-ab2 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=ab, family=neg.bin(theta=2))
-ab3 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=ab, family=neg.bin(theta=3))
-ab4 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=ab, family=neg.bin(theta=4))
-model.sel(list(ab1, ab2, ab3, ab4), rank=AICc)
-
-ab1.5 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=ab, family=neg.bin(theta=1.5))
-model.sel(list(ab1, ab2, ab1.5), rank=AICc)
-
-ab1 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=ab, family=neg.bin(theta=1))
-ab1.1 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=ab, family=neg.bin(theta=1.1))
-ab1.2 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=ab, family=neg.bin(theta=1.2))
-ab1.3 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=ab, family=neg.bin(theta=1.3))
-ab1.4 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=ab, family=neg.bin(theta=1.4))
-ab1.5 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=ab, family=neg.bin(theta=1.5))
-model.sel(list(ab1, ab1.1, ab1.2, ab1.3, ab1.4, ab1.5), rank=AICc)
-# theta = 1.2
-
-# Check model params and select predictors
-ab.gl <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=ab, na.action=na.fail, family=neg.bin(theta=1.2))
-summary(ab.gl)
-plot(ab.gl)
-qqnorm(resid(ab.gl))
-qqline(resid(ab.gl))
-acf(resid(ab.gl))
-check_collinearity(ab.gl)
-print(dredge(ab.gl))
-
-ab.glm <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.rubble + (1|month) + (1|location/site), data=ab, na.action=na.fail, family=neg.bin(theta=1.2))
-summary(ab.glm)
-plot(ab.glm)
-qqnorm(resid(ab.glm))
-qqline(resid(ab.glm))
-acf(resid(ab.glm))
-r2_nakagawa(ab.glm)
-plot_model(ab.glm, type="pred")
-mean(ab$total)
-
-# Extract the coefficients
-ab.co <- summary(ab.glm)$coefficients
-
-# Calculate the effect size for temperature (temp.c)
-ab.temp <- exp(ab.co["temp.c", "Estimate"])  # Exponentiate the coefficient
-
-# Convert to percentage change
-(ab.temp - 1) * 100
-
-# Calculate the confidence intervals
-ab.ci <- confint(ab.glm, level=0.95)
-ab.ci.temp <- exp(ab.ci["temp.c", ])  # Exponentiate the confidence intervals
-ab.ci.per.temp <- (ab.ci.temp - 1) * 100
-print(ab.ci.per.temp)
-
-# Calculate the effect size for TL (tl)
-ab.tl <- exp(ab.co["tl", "Estimate"])  # Exponentiate the coefficient
-
-# Convert to percentage change
-(ab.tl - 1) * 100
-
-# Calculate the confidence intervals
-ab.ci.tl <- exp(ab.ci["tl", ])  # Exponentiate the confidence intervals
-(ab.ci.tl - 1) * 100
-
-```
-
-```{r, TURBIDITY MODEL - Z. flavescens}
-
-ggplot(data=zf) +
-  geom_histogram(aes(x=total), bins=20) # Tweedie or Negative binomial
-
-nbin <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=zf, na.action=na.fail, family=neg.bin(theta=1))
-tweedie <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=zf, na.action=na.fail, family=tweedie(var.power=1.5))
-plot(nbin)
-qqnorm(resid(nbin))
-qqline(resid(nbin))
-plot(tweedie)
-qqnorm(resid(tweedie))
-qqline(resid(tweedie)) # Negative binomial is better fit
-
-# Check number of observations at each location/site for random effects structure
-nrow(follows.dat[follows.dat$location == "L1 - South Bay" & follows.dat$site == "1" & follows.dat$species == "Z. flavescens", ]) # 0 observations
-nrow(follows.dat[follows.dat$location == "L1 - South Bay" & follows.dat$site == "2" & follows.dat$species == "Z. flavescens", ]) # 4 
-nrow(follows.dat[follows.dat$location == "L1 - South Bay" & follows.dat$site == "3" & follows.dat$species == "Z. flavescens", ]) # 34
-nrow(follows.dat[follows.dat$location == "L2 - Mid Bay" & follows.dat$site == "1" & follows.dat$species == "Z. flavescens", ]) # 57
-nrow(follows.dat[follows.dat$location == "L2 - Mid Bay" & follows.dat$site == "2" & follows.dat$species == "Z. flavescens", ]) # 23
-nrow(follows.dat[follows.dat$location == "L2 - Mid Bay" & follows.dat$site == "3" & follows.dat$species == "Z. flavescens", ]) # 25
-nrow(follows.dat[follows.dat$location == "L3 - North Bay" & follows.dat$site == "1" & follows.dat$species == "Z. flavescens", ]) # 4
-nrow(follows.dat[follows.dat$location == "L3 - North Bay" & follows.dat$site == "2" & follows.dat$species == "Z. flavescens", ]) # 54
-nrow(follows.dat[follows.dat$location == "L3 - North Bay" & follows.dat$site == "3" & follows.dat$species == "Z. flavescens", ]) # 50
-
-# Use 'site.id' instead of 'location/site' since didn't see many at some locatin/site combos
-
-# Identify theta value
-zf1 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|site.id), data=zf, na.action=na.fail, family=neg.bin(theta=1))
-zf2 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|site.id), data=zf, na.action=na.fail, family=neg.bin(theta=2))
-zf3 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|site.id), data=zf, na.action=na.fail, family=neg.bin(theta=3))
-zf4 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|site.id), data=zf, na.action=na.fail, family=neg.bin(theta=4))
-model.sel(list(zf1, zf2, zf3, zf4), rank=AICc)
-
-zf1.5 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|site.id), data=zf, na.action=na.fail, family=neg.bin(theta=1.5))
-model.sel(list(zf1, zf2, zf1.5), rank=AICc)
-
-zf1.1 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|site.id), data=zf, na.action=na.fail, family=neg.bin(theta=1.1))
-zf1.2 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|site.id), data=zf, na.action=na.fail, family=neg.bin(theta=1.2))
-zf1.3 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|site.id), data=zf, na.action=na.fail, family=neg.bin(theta=1.3))
-model.sel(list(zf1, zf1.1, zf1.2, zf1.3), rank=AICc)
-# theta = 1
-
-# Check model params and select predictors
-zf.gl2 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|site.id), data=zf, na.action=na.fail, family=neg.bin(theta=1))
-summary(zf.gl2)
-plot(zf.gl2)
-qqnorm(resid(zf.gl2))
-qqline(resid(zf.gl2))
-acf(resid(zf.gl2))
-check_collinearity(zf.gl2)
-print(dredge(zf.gl2))
-
-zf.glm <- glmer(total ~ turbidity.ntu + tl + bc.rubble + (1|month) + (1|site.id), data=zf, family=neg.bin(theta=1)) # delta AICc = 0.64 (3rd best model)
-summary(zf.glm)
-plot(zf.glm)
-qqnorm(resid(zf.glm))
-qqline(resid(zf.glm))
-acf(resid(zf.glm))
-r2_nakagawa(zf.glm)
-
-# Extract the coefficients
-zf.co <- summary(zf.glm)$coefficients
-
-# Calculate the effect size for TL
-zf.tl <- exp(zf.co["tl", "Estimate"])  # Exponentiate the coefficient
-
-# Convert to percentage change
-(zf.tl - 1) * 100
-
-# Calculate the confidence intervals
-zf.ci <- confint(zf.glm, level=0.95)
-zf.ci.tl <- exp(zf.ci["tl", ])  # Exponentiate the confidence intervals
-(zf.ci.tl - 1) * 100
-
-```
-
-```{r, TURBIDITY MODEL - Z. velifer}
-
-# Remove outlier
-zvout <- zv %>%
-  filter(turbidity.ntu<=5)
-
-ggplot(data=zvout) +
-  geom_histogram(aes(x=total)) # Negative binomial
-
-# Identify theta value
-zv1 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=zvout, na.action=na.fail, family=neg.bin(theta=1))
-zv2 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=zvout, na.action=na.fail, family=neg.bin(theta=2))
-zv3 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=zvout, na.action=na.fail, family=neg.bin(theta=3))
-zv4 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=zvout, na.action=na.fail, family=neg.bin(theta=4))
-model.sel(list(zv1, zv2, zv3, zv4), rank=AICc)
-
-zv1.2 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=zvout, na.action=na.fail, family=neg.bin(theta=1.2))
-model.sel(list(zv1, zv1.2), rank=AICc)
-# theta = 1
-
-zv.gl <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.turf + bc.rubble + (1|month) + (1|location/site), data=zvout, na.action=na.fail, family=neg.bin(theta=1))
-summary(zv.gl)
-plot(zv.gl)
-qqnorm(resid(zv.gl))
-qqline(resid(zv.gl))
-acf(resid(zv.gl))
-check_collinearity(zv.gl)
-print(dredge(zv.gl))
-
-zv.glm <- glmer(turf ~ turbidity.ntu + tl + temp.c + (1|month) + (1|location/site), data=zvout, family=neg.bin(theta=2)) # delta AICc=1.81 (4th best model)
-summary(zv.glm)
-plot(zv.glm)
-qqnorm(resid(zv.glm))
-qqline(resid(zv.glm))
-acf(resid(zv.glm))
-r2_nakagawa(zv.glm)
-plot_model(zv.glm, type="pred")
-
-# Extract the coefficients
-zv.co <- summary(zv.glm)$coefficients
-
-# Calculate the effect size for temperature (temp.c)
-zv.temp <- exp(zv.co["temp.c", "Estimate"])  # Exponentiate the coefficient
-
-# Convert to percentage change
-(zv.temp - 1) * 100
-
-
-# Calculate the confidence intervals
-zv.ci <- confint(zv.glm, level=0.95)
-zv.ci.temp <- exp(zv.ci["temp.c", ])  # Exponentiate the confidence intervals
-(zv.ci.temp - 1) * 100
-
-# Calculate the effect size for TL (tl)
-zv.tl <- exp(zv.co["tl", "Estimate"])  # Exponentiate the coefficient
-
-# Convert to percentage change
-zv.tl.per <- (zv.tl - 1) * 100
-print(zv.tl.per)
-
-# Calculate the confidence intervals
-zv.ci <- confint(zv.glm, level=0.95)
-zv.ci.tl <- exp(zv.ci["tl", ])  # Exponentiate the confidence intervals
-zv.ci.per.tl <- (zv.ci.tl - 1) * 100
-print(zv.ci.per.tl)
-```
-
-```{r, TURBIDITY MODEL - N. unicornis and N. lituratus}
-# Run with macro instead of turf as predictor since macro is main food choice
-
-# Identify theta value
-u1 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.macro + bc.rubble + (1|month) + (1|site), data=unis, na.action=na.fail, family=neg.bin(theta=1))
-u2 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.macro + bc.rubble + (1|month) + (1|site), data=unis, na.action=na.fail, family=neg.bin(theta=2))
-u3 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.macro + bc.rubble + (1|month) + (1|site), data=unis, na.action=na.fail, family=neg.bin(theta=3))
-u4 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.macro + bc.rubble + (1|month) + (1|site), data=unis, na.action=na.fail, family=neg.bin(theta=4))
-model.sel(list(u1, u2, u3, u4), rank=AICc)
-
-u1.2 <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.macro + bc.rubble + (1|month) + (1|site), data=unis, na.action=na.fail, family=neg.bin(theta=1.2))
-model.sel(list(u1, u1.2), rank=AICc)
-# theta = 1
-
-# Check number of observations at each location/site for random effects structure
-nrow(follows.dat[follows.dat$location == "L1 - South Bay" & follows.dat$species == "N. unicornis", ]) # 0
-nrow(follows.dat[follows.dat$location == "L2 - Mide Bay" & follows.dat$species == "N. unicornis", ]) # 0
-nrow(follows.dat[follows.dat$location == "L3 - North Bay" & follows.dat$species == "N. unicornis", ]) # 43
-nrow(follows.dat[follows.dat$location == "L1 - South Bay" & follows.dat$species == "N. lituratus", ]) # 0 
-nrow(follows.dat[follows.dat$location == "L2 - Mid Bay" & follows.dat$species == "N. lituratus", ]) # 0 
-nrow(follows.dat[follows.dat$location == "L3 - North Bay" & follows.dat$species == "N. lituratus", ]) # 11
-
-u.gl <- glmer(total ~ turbidity.ntu + tl + temp.c + bc.macro + bc.rubble + (1|month) + (1|site), data=unis, na.action=na.fail, family=neg.bin(theta=1)) # Only "site" as random effect instead of location/site since only seen at Location 3
-summary(u.gl)
-plot(u.gl)
-qqnorm(resid(u.gl))
-qqline(resid(u.gl))
-acf(resid(u.gl))
-print(dredge(u.gl))
-
-# Delta AICc = 0
-u.glm <- glmer(total ~ turbidity.ntu + bc.macro + bc.rubble + (1|month) + (1|site), data=unis, na.action=na.fail, family=neg.bin(theta=1)) # fail to converge
-# Delta AICc = 1.27
-u.glm2 <- glmer(total ~ bc.macro + bc.rubble + (1|month) + (1|site), data=unis, na.action=na.fail, family=neg.bin(theta=1)) # singular fit
-
-# Delta AICc = 1.74
-u.glm3 <- glmer(total ~ turbidity.ntu + bc.macro + (1|month) + (1|site), data=unis, family=neg.bin(theta=1))
-summary(u.glm3)
-plot(u.glm3)
-qqnorm(resid(u.glm3))
-qqline(resid(u.glm3))
-acf(resid(u.glm3))
-r2_nakagawa(u.glm3) # Conditional R2 may be over or under estimated
-
-# Check coefficients
-ggplot(unis, aes(x=turbidity.ntu, y=macro)) +
-  geom_smooth(method="lm") +
-  geom_point()
-
-ggplot(unis, aes(x=turbidity.ntu, y=total)) +
-  geom_smooth(method="lm") +
-  geom_point()
-
-# Extract the coefficients
-uni.co <- summary(u.glm3)$coefficients
-
-# Calculate the effect size for bc.macro
-uni.mac <- exp(uni.co["bc.macro", "Estimate"])  # Exponentiate the coefficient
-
-# Convert to percentage change
-(uni.mac - 1) * 100
-
-# Calculate the confidence intervals
-uni.ci <- confint(u.glm3, level=0.95)
-uni.ci.mac <- exp(uni.ci["bc.macro", ])  # Exponentiate the confidence intervals
-(uni.ci.mac - 1) * 100
-
-
-```
-
-```{r, lstrends - Comparing bite rate slopes}
-
-# Compare functional group slopes
+#####################  Compare functional group slopes ##################### 
 fun.sl <- glmer(total ~ turbidity.ntu * functional + temp.c + (1|month), data=follows.dat, na.action=na.fail, family=neg.bin(theta=1.5))
 summary(fun.sl)
 plot(fun.sl)
@@ -1847,7 +1227,7 @@ summary(fun.trends)
 multcomp::cld(fun.trends)
 pwpp(fun.trends) # No differences
 
-# Compare species slopes
+##################### Compare species slopes ##################### 
 species.sl <- glmer(total ~ turbidity.ntu * species + bc.turf + (1|month) + (1|site.id), data=follows.dat, family=neg.bin(theta=2.5))
 summary(species.sl)
 plot(species.sl)
@@ -1863,18 +1243,17 @@ multcomp::cld(sp.trends)
 pwpp.sp <- pwpp(sp.trends)
 print(pwpp.sp) # Significant differences between species
 print(pwpm(sp.trends))
-#ggsave("pwpp.sp.jpg", pwpp.sp)
 
+# Plot foraging rate means of each species
 ggplot(follows.dat, aes(x=turbidity.ntu, y=total, color=species, fill=species)) +
   geom_jitter(alpha=.3) +
   geom_smooth(method="glm")
 
-################################# SIZE GROUPS
+##################### SIZE GROUPS ##################### 
 
 # Compare size groups within each species
 
-#######################  A. triostegus 
-
+##################### A. triostegus ##################### 
 
 atage.sl <- lmer(sqrt(total) ~ turbidity.ntu * as.factor(tl.grp) + temp.c + bc.turf + (1|month) + (1|site.id), at.age, na.action=na.fail)
 summary(atage.sl)
@@ -1895,7 +1274,7 @@ ggplot(at.age, mapping=aes(x=turbidity.ntu, y=total, fill=as.factor(tl.grp), col
   geom_smooth(method="glm") +
   labs(title="A. triostegus")
 
-#######################  A. blochii
+##################### A. blochii ##################### 
 
 abage.sl <- glmer(total ~ turbidity.ntu * as.factor(tl.grp) + temp.c + bc.turf + (1|month) + (1|site.id), ab.age, na.action=na.fail, family=neg.bin(theta=3)) 
 summary(abage.sl)
@@ -1916,7 +1295,7 @@ ggplot(ab.age, mapping=aes(x=turbidity.ntu, y=total, fill=as.factor(tl.grp), col
   geom_smooth(method="glm") +
   labs(title="A. blochii")
 
-#######################  Z. flavescens
+##################### Z. flavescens ##################### 
 
 zfage.sl <- glmer(total ~ turbidity.ntu * as.factor(tl.grp) + (1|month) + (1|site.id), zf.age, na.action=na.fail, family=neg.bin(theta=1)) # Had to remove bc.turf and temp.c predictors for model to converge
 summary(zfage.sl)
@@ -1938,7 +1317,7 @@ ggplot(zf.age, mapping=aes(x=turbidity.ntu, y=total, fill=as.factor(tl.grp), col
   geom_smooth(method="glm") +
   labs(title="Z. flavescens")
 
-####################### Z. velifer
+####################### Z. velifer ##################### 
 
 zvage.sl <- glmer(total ~ turbidity.ntu * as.factor(tl.grp) + temp.c + bc.turf + (1|month) + (1|site.id), zv.age, na.action=na.fail, family=neg.bin(theta=3)) 
 summary(zvage.sl)
@@ -1960,7 +1339,7 @@ ggplot(zv.age, mapping=aes(x=turbidity.ntu, y=total, fill=as.factor(tl.grp), col
   geom_smooth(method="glm") +
   labs(title="Z. velifer")
 
-######################## C. spilurus juveniles
+######################## C. spilurus juveniles ##################### 
 cs.juvenile <- cs.age %>%
   filter(tl.grp == "juvenile")
 csage.sl <- glmer(total ~ turbidity.ntu  + temp.c + bc.turf + (1|month) + (1|site.id), cs.juvenile, na.action=na.fail, family=neg.bin(theta=1.5))
@@ -1969,7 +1348,7 @@ plot(csage.sl)
 qqnorm(resid(csage.sl))
 qqline(resid(csage.sl)) # turbidity has no effect
 
-######################## S. psittacus juveniles
+######################## S. psittacus juveniles ##################### 
 sp.juvenile <- sp.age %>%
   filter(tl.grp == "juvenile")
 spage.sl <- glmer(total ~ turbidity.ntu  + temp.c + bc.turf + (1|month) + (1|site.id), sp.juvenile, na.action=na.fail, family=neg.bin(theta=2))
@@ -1983,9 +1362,12 @@ qqline(resid(spage.sl)) # turbidity has no effect
 
 ```
 
-#################### Statistics - SeS vs. No SeS ####################
+#################### Statistics - Deposited Sediment vs. No Deposited Sediment ####################
 
-```{r, DATA WRANGLING FOR SeS MODELS}
+```{r, DATA WRANGLING FOR DEPOSITED SEDIMENT MODELS}
+
+### NOTE - Throughout code, SeS ("settled sediment") refers to deposited sediment ###
+
 # Data wrangling to remove rows with "-" ses values - Started taking SeS measurements in February 2023
 ses.dat <- follows.dat %>%
   filter(ses != "-")
@@ -2005,7 +1387,7 @@ unis.ses.dat <- filter(ses.dat,species %in% c("N. unicornis", "N. lituratus"))
 
 ```
 
-```{r, SES MODEL - C. spilurus}
+```{r, DEPOSITED SEDIMENT MODEL - C. spilurus}
 ## All substrates ##
 cs.ses <- glmer(total ~ ses * bc.turf + tl + temp.c + (1|month) + (1|site.id), data=cs.ses.dat, family=neg.bin(theta=2.5))
 summary(cs.ses)
@@ -2017,7 +1399,7 @@ r2_nakagawa(cs.ses)
 
 ```
 
-```{r, SES MODEL - S. psittacus}
+```{r, DEPOSITED SEDIMENT MODEL - S. psittacus}
 ## All substrates ##
 sp.ses <- glmer(total ~ ses * bc.turf + tl + temp.c + (1|month) + (1|site.id), data=sp, family=neg.bin(theta=3))
 summary(sp.ses)
@@ -2029,7 +1411,7 @@ r2_nakagawa(sp.ses)
 
 ```
 
-```{r, SES MODEL - A. triostegus}
+```{r, DEPOSITED SEDIMENT MODEL - A. triostegus}
 ## All substrates ##
 m.ses <- lmer(sqrt(total) ~ ses * bc.turf + temp.c + tl + (1|month) + (1|site.id), data=manini.ses.dat)
 summary(m.ses)
@@ -2041,7 +1423,7 @@ r2_nakagawa(m.ses)
 
 ```
 
-```{r, SES MODEL - A. blochii}
+```{r, DEPOSITED SEDIMENT MODEL - A. blochii}
 ## All substrates ##
 ab.ses <- glmer(total ~ ses * bc.turf + tl + temp.c + (1|month) + (1|site.id), data=ab.ses.dat, family=neg.bin(theta=1.2))
 summary(ab.ses)
@@ -2052,7 +1434,7 @@ r2_nakagawa(ab.ses)
 
 ```
 
-```{r, SES MODEL - Z. flavescens}
+```{r, DEPOSITED SEDIMENT MODEL - Z. flavescens}
 ## All substrates ##
 zf.ses <- glmer(total ~ ses * bc.turf + tl + temp.c + (1|month) + (1|site.id), data=zf.ses.dat, family=neg.bin(theta=1))
 summary(zf.ses)
@@ -2063,7 +1445,7 @@ r2_nakagawa(zf.ses) # Conditioanl R2 may be under or over estimated
 
 ```
 
-```{r, SES MODEL - Z. velifer}
+```{r, DEPOSITED SEDIMENT MODEL - Z. velifer}
 ## All substrates ##
 zv.ses <- glmer(total ~ ses * bc.turf + tl + temp.c + (1|month) + (1|site.id), data=zv.ses.dat, family=neg.bin(theta=1))
 summary(zv.ses)
@@ -2074,7 +1456,7 @@ r2_nakagawa(zv.ses)
 
 ```
 
-```{r, SES MODEL - N. unicornis and lituratus}
+```{r, DEPOSITED SEDIMENT MODEL - N. unicornis and lituratus}
 ## All substrates ##
 uses.nb <- glmer(total ~ ses * bc.turf + tl + temp.c + (1|month) + (1|site), data=unis.ses.dat, family=neg.bin(theta=1))
 summary(uses.nb)
@@ -2085,12 +1467,12 @@ r2_nakagawa(uses.nb) # Conditional R2 may be under or over estimated
 
 ```
 
-#################### Selectivity Index - Site Groups ####################
+#################### Selectivity Index - Turbidity Site Groups ####################
 
 ```{r, SELECTIVITY INDEX - Load data}
 # Bring in data sheets
-bites <- read.csv("/Users/Kat/Documents/2_Research/Fish Follows Manuscript/GitHub/strauss_food.csv")
-benthos <- read.csv("/Users/Kat/Documents/2_Research/Fish Follows Manuscript/GitHub/strauss_benthos.csv")
+bites <- read.csv("/Users/Kat/Documents/2_Research/Fish Follows Manuscript/GitHub/urban-reefs-herbivory/strauss_food.csv")
+benthos <- read.csv("/Users/Kat/Documents/2_Research/Fish Follows Manuscript/GitHub/urban-reefs-herbivory/strauss_benthos.csv")
 
 # Create df by site groupings
 bites1 <- bites %>%
@@ -3766,7 +3148,7 @@ selectsite.plot <- ggarrange(select3.plot,select2.plot,select1.plot, common.lege
 
 ```
 
-```{r, ANOVA for Selectivity Index - Site Groups}
+```{r, ANOVA for SELECTIVITY INDEX - Site Groups}
 ### Can't run with Naso spp. or Z. flavescens because sample sizes don't work ###
 
 ### A. blochii ###
@@ -3898,11 +3280,11 @@ TukeyHSD(spgroup.aov)
 
 ```
   
-#################### Selectivity Index - SeS vs. No SeS ####################  
+#################### Selectivity Index - Deposited Sediment vs. No Deposited Sediment ####################  
   
 ```{r, SELECTIVITY INDEX, SeS DATA WRANGLING}  
-sesbites <- read.csv("/Users/Kat/Documents/2_Research/Thesis Resources/Fish Follows Manuscript/GitHub/strauss_food_ses.csv")
-sesbenthos <- read.csv("/Users/Kat/Documents/2_Research/Thesis Resources/Fish Follows Manuscript/GitHub/strauss_benthos_ses.csv")
+sesbites <- read.csv("/Users/Kat/Documents/2_Research/Fish Follows Manuscript/GitHub/urban-reefs-herbivory/strauss_food_ses.csv")
+sesbenthos <- read.csv("/Users/Kat/Documents/2_Research/Fish Follows Manuscript/GitHub/urban-reefs-herbivory/strauss_benthos_ses.csv")
 
 # Remove surveys without SeS observation and split data frames
 sesbites1 <- sesbites %>%
@@ -5026,7 +4408,7 @@ ggsave("selectses2.plot.jpg", selectses2.plot, width=11, height=7, dpi=300)
 
 ```
 
-```{r, T-test for Selectivity Index - SeS/No SeS}
+```{r, t-test for SELECTIVITY INDEX - SeS/No SeS}
 ### A. blochii ###
 # Add columns and combine dataframes
 abstra11ses$sediment <- "ses"
