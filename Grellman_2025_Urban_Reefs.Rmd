@@ -617,10 +617,9 @@ zf.age <- zf.age[!is.na(zf.age$tl.grp), ]
 nrow(zf.age[zf.age$tl.grp == "juvenile", ]) # 46
 nrow(zf.age[zf.age$tl.grp == "adult", ]) # 155
 
-
 # Z. velifer
-View(zvout)
-zv.age <- zvout %>%
+zv.age <- zvout.dat %>%
+  filter(species == "Z. velifer") %>%
       mutate(tl.grp = ifelse(tl < 6.3, "juvenile", ifelse(tl > 10.3, "adult", NA)))
 # Remove NAs
 zv.age <- zv.age[!is.na(zv.age$tl.grp), ]
@@ -664,17 +663,9 @@ nrow(sp.age[sp.age$tl.grp == "juvenile", ]) # 404
 nrow(sp.age[sp.age$tl.grp == "adult", ]) # 14
 
 
-##### Calculate number of juveniles and adults #######
+##### Plot number of juveniles and adults #######
 
-zv <- follows.dat %>%
-  filter(species == "Z. velifer")
-zv.age1 <- zv %>%
-      mutate(tl.grp = ifelse(tl < 6.3, "juvenile", ifelse(tl > 10.3, "adult", NA)))
-# Remove NAs
-zv.age1 <- zv.age1[!is.na(zv.age1$tl.grp), ]
-nrow(zv.age1[zv.age1$tl.grp == "juvenile", ]) # 154
-nrow(zv.age1[zv.age1$tl.grp == "adult", ]) # 133
-ontogeny.dat <- rbind(sp.age, cs.age, at.age, ab.age, zf.age, zv.age1)
+ontogeny.dat <- rbind(sp.age, cs.age, at.age, ab.age, zf.age, zv.age)
 View(ontogeny.dat)
 
 ggplot(ontogeny.dat, aes(x=site.grp, y=tl, fill=as.factor(tl.grp), color=as.factor(tl.grp))) +
@@ -683,9 +674,6 @@ ggplot(ontogeny.dat, aes(x=site.grp, y=tl, fill=as.factor(tl.grp), color=as.fact
   stat_summary(fun=mean, position=position_dodge(width=.75), geom="point",color="black",size=3) +
   xlab("Site Grouping") + 
   ylab("Fish Total Length (cm)")
-
-tapply(ontogeny.dat$tl.grp, ontogeny.dat$site.grp, count)
-tapply(ontogeny.dat$tl.grp, ontogeny.dat$site.grp, count)
 
 ```
 
